@@ -354,8 +354,12 @@ if (isset($_SESSION["userid"])) LogIPHistory($_SESSION["userid"]);
    }
    $deckObj = json_decode($apiDeck);
    if ($isGradely) {
-     if ($apiInfo['http_code'] != 200) {
-       $response->error = "Could not load deck from Gradely: " . ($deckObj->error->message ?? "HTTP " . $apiInfo['http_code']);
+     $httpCode = $apiInfo['http_code'];
+     if ($httpCode != 200) {
+       if ($httpCode == 404) $response->error = "Deck not found on Gradely. The deck may be private, unpublished or deleted, or the URL is incorrect.";
+       else if ($httpCode == 400) $response->error = "Only Flesh and Blood decks can be loaded from Gradely.";
+       else if ($httpCode >= 500) $response->error = "Gradely could not load this deck right now. Please try again in a minute.";
+       else $response->error = "Could not load deck from Gradely: " . ($deckObj->error->message ?? "HTTP " . $httpCode);
        echo (json_encode($response));
        die();
      }
